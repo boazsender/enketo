@@ -400,8 +400,9 @@ function _submitRecord(survey) {
                 })}<br/>`;
                 level = 'warning';
             }
+            return result
         })
-        .then(() => {
+        .then((result) => {
             // this event is used in communicating back to iframe parent window
             document.dispatchEvent(events.SubmissionSuccess());
 
@@ -443,7 +444,7 @@ function _submitRecord(survey) {
                     );
                 }, 1200);
             } else {
-                msg = msg.length > 0 ? msg : t('alert.submissionsuccess.msg');
+                msg = result.submitMessage ? result.message.length > 0 ? result.message : msg.length > 0 ? msg : t('alert.submissionsuccess.msg') : t('alert.submissionsuccess.msg');
                 gui.alert(msg, t('alert.submissionsuccess.heading'), level);
                 _resetForm(survey);
             }

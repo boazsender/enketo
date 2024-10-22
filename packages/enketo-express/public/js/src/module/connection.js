@@ -164,30 +164,29 @@ function _uploadBatch(recordBatch) {
                     : undefined,
             };
 
-            if (response.status === 400) {
-                // 400 is a generic error. Any message returned by the server is probably more useful.
-                // Other more specific statusCodes will get hardcoded and translated messages.
-                return response.text().then((text) => {
-                    const xmlResponse = parser.parseFromString(
-                        text,
-                        'text/xml'
+            return response.text().then((text) => {
+                const xmlResponse = parser.parseFromString(
+                    text,
+                    'text/xml'
+                );
+                if (xmlResponse) {
+                    const messageEl = xmlResponse.querySelector(
+                        'OpenRosaResponse > message'
                     );
-                    if (xmlResponse) {
-                        const messageEl = xmlResponse.querySelector(
-                            'OpenRosaResponse > message'
-                        );
-                        if (messageEl) {
-                            result.message = messageEl.textContent;
-                        }
+                    if (messageEl) {
+                        result.message = messageEl.textContent;
                     }
+                    const submitMessage = xmlResponse.querySelector(
+                        'OpenRosaResponse > kobo > submitMessage'
+                    );
+                    result.submitMessage = submitMessage ? true : false;
+                }
+                if (response.status !== 201 && response.status !== 202) {
                     throw result;
+                } else {
+                    return result;
+                }
                 });
-            }
-            if (response.status !== 201 && response.status !== 202) {
-                throw result;
-            } else {
-                return result;
-            }
         })
         .catch((error) => {
             if (
