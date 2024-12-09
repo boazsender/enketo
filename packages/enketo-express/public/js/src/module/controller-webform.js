@@ -419,53 +419,43 @@ function _submitRecord(survey, modelStr) {
             if(
                 settings.type === 'single' 
                 && maybeSubmitMessage 
-                && result.message.length > 0 
-                && settings.multipleAllowed
+                && result.message.length > 0
             ) {
-                gui.alert(
-                    jstransformer.render(result.message),
-                    t('alert.submissionsuccess.heading'),
-                    level,
-                    undefined,
-                    !maybeSubmitMessage,
-                    "",
-                    false,
-                    false,
-                );
-                _resetForm(survey);
+                if (
+                    settings.multipleAllowed
+                    || (!settings.multipleAllowed &&
+                    !document.cookie.includes(settings.enketoId))
+                ) {
+                    gui.alert(
+                        jstransformer.render(result.message),
+                        t('alert.submissionsuccess.heading'),
+                        level,
+                        undefined,
+                        !maybeSubmitMessage,
+                        "",
+                        false,
+                        false,
+                    );
+                    _resetForm(survey);
+                }
+            }
+
+            if (
+                !settings.multipleAllowed 
+                && !document.cookie.includes(settings.enketoId)
+            ) {
+                placeCookie();
+            }
+
+            if (
+                settings.type === 'single' 
+                && maybeSubmitMessage 
+                && result.message.length > 0
+            ) {
                 return;
             }
 
             if (redirect) {
-                if (!settings.multipleAllowed) {
-                    const now = new Date();
-                    const age = 31536000;
-                    const d = new Date();
-                    /**
-                     * Manipulate the browser history to work around potential ways to
-                     * circumvent protection against multiple submissions:
-                     * 1. After redirect, click Back button to load cached version.
-                     */
-                    history.replaceState(
-                        {},
-                        '',
-                        `${settings.defaultReturnUrl}?taken=${now.getTime()}`
-                    );
-                    /**
-                     * The above replaceState doesn't work in Safari and probably in
-                     * some other browsers (mobile). It shows the
-                     * final submission dialog when clicking Back.
-                     * So we remove the form...
-                     */
-                    $('form.or').empty();
-                    $('button#submit-form').remove();
-                    d.setTime(d.getTime() + age * 1000);
-                    document.cookie = `${
-                        settings.enketoId
-                    }=${now.getTime()};path=${
-                        settings.basePath
-                    }/single;max-age=${age};expires=${d.toGMTString()};`;
-                }
                 msg += t('alert.submissionsuccess.redirectmsg');
                 gui.alert(msg, t('alert.submissionsuccess.heading'), level);
                 setTimeout(() => {
@@ -954,6 +944,35 @@ function postEventAsMessageToParentWindow(event) {
     }
 }
 
+function placeCookie() {
+    const now = new Date();
+    const age = 31536000;
+    const d = new Date();
+    /**
+     * Manipulate the browser history to work around potential ways to
+     * circumvent protection against multiple submissions:
+     * 1. After redirect, click Back button to load cached version.
+     */
+    history.replaceState(
+        {},
+        '',
+        `${settings.defaultReturnUrl}?taken=${now.getTime()}`
+    );
+    /**
+     * The above replaceState doesn't work in Safari and probably in
+     * some other browsers (mobile). It shows the
+     * final submission dialog when clicking Back.
+     * So we remove the form...
+     */
+    $('form.or').empty();
+    $('button#submit-form').remove();
+    d.setTime(d.getTime() + age * 1000);
+    document.cookie = `${
+        settings.enketoId
+    }=${now.getTime()};path=${
+        settings.basePath
+    }/single;max-age=${age};expires=${d.toGMTString()};`;
+}
 export default {
     init,
     setLogoutLinkVisibility,
