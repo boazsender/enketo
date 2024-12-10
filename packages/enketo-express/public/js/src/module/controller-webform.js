@@ -441,7 +441,8 @@ function _submitRecord(survey, modelStr) {
             }
 
             if (
-                !settings.multipleAllowed 
+                redirect
+                && !settings.multipleAllowed 
                 && !document.cookie.includes(settings.enketoId)
             ) {
                 placeCookie();
